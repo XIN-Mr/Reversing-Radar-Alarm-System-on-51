@@ -1,0 +1,106 @@
+ESP8266可以配置成station 、AP、station+AP三种模式，就是说模块可以当成一个设备(client)连接局域网内的路由，也可以设置成是一个路由(sever)，也可以既作为局域网里面的client同时又是其它client的sever
+
+
+1、ESP8266 Client模式(Station)：
+
+AT+RST						//复位模块
+AT+CWMODE=1					//设置为station模式
+AT+RST						//重启生效
+AT+CWLAP					//查看可以连接到的无线路由
+AT+CWJAP="yuan","456852123"			//连接上无线路由
+AT+CIFSR					//查询模块的IP地址
+AT+CIPMUX=1					//打开多连接，否则会报错Link typ error
+AT+CIPSTART=0,"TCP","192.168.1.111",6060	//连接到TCP Server上 使用网络调试助手创建一个TCP Server
+AT+CIPSEND=0,7					//发送字符长度    
+testrun						//发送7个字符给Server端
+						同时Server端也可以发数据给Client端
+
+
+单链接方式
+AT+RST						//复位模块
+AT+CWMODE=1					//设置为station模式
+AT+RST						//重启生效
+AT+CWLAP					//查看可以连接到的无线路由
+AT+CWJAP="JSZZSJ3","********"			//连接上无线路由
+AT+CIFSR					//查询模块的IP地址
+AT+CIPMUX=0					//打开单连接，否则会报错Link typ error
+AT+CIPSTART="TCP","192.168.1.111",6060		//连接到TCP Server上  使用网络调试助手创建一个TCP Server
+AT+CIPSEND=7					//发送字符长度    
+testrun						//发送7个字符给Server端
+						同时Server端也可以发数据给Client端
+
+
+2、ESP8266 Server模式(Station+AP)：
+AT+RST						//复位模块
+AT+CWMODE=3					//设置为AP模式
+AT+RST						//重启生效
+AT+CWLAP					//查看可以连接到的无线路由
+AT+CWJAP="JSZZSJ3","********"			//连接上无线路由
+AT+CIFSR					//查询模块的IP地址
+AT+CIPMUX=1					//打开多连接
+AT+CIPSERVER=1,6060				//建立Server
+
+使用网络调试助手创建一个TCP Client，设置好要连接到的Server的IP和端口号，即可连接
+Client就可以发送数据给Server端了
+如果同时想Server发数据给Client只要如下命令
+AT+CIPSEND=0,7	//发送字符长度 
+就可以发送数据了
+
+
+3、串口透传模式（TCP模式）
+AT+RST						//复位模块
+AT+CWMODE=3或者1 				//设置为AP+Station模式或Station模式
+AT+CWLAP					//查看可以连接到的无线路由
+AT+CWJAP="yuan","456852123"			//连接上无线路由
+AT+CIFSR					//查询模块的IP地址
+AT+CIPSTART="TCP","192.168.1.176",9999		//用手机做服务器，打开网络调试助手，建一个TCP server
+AT+CIPMODE=1
+AT+CIPSEND
+
+接下来就可以透传了
+如果要关闭透传先发送三个“+”，提示CLOSE后，再勾选发送新行
+
+
+4、串口透传模式（UDP模式）
+AT+RST						//复位模块
+AT+CWMODE=3或者1 				//设置为AP+Station模式或Station模式
+AT+CWLAP					//查看可以连接到的无线路由
+AT+CWJAP="JSZZSJ3","********"			//连接上无线路由
+AT+CIFSR					//查询模块的IP地址
+AT+CIPSTART="UDP","192.168.1.176",9999,5000,0	//用手机做服务器，打开网络调试助手，建一个UDP server
+AT+CIPMODE=1
+AT+CIPSEND
+
+接下来就可以透传了
+如果要关闭透传先发送三个“+”，提示CLOSE后，再勾选发送新行
+
+
+AT+RESTORE
+AT+CIPSTART="UDP","255.255.255.255",5000,5000
+AT+CIPMODE=0					//0  表示单距连接
+AT+CIPSEND=5                			//5  是数据长度
+
+
+
+
+
+
+给你一个双向传输的示例
+
+A模块和B模块先执行:
+AT+CWMODE=3
+
+A模块:
+AT+CWLAP//列出附近的AP得到B模块的SSID
+AT+CWJAP="B模块的SSID","PWD" 
+AT+CIPMUX=0
+AT+CIPSTART="UDP","255.255.255.255",6060,6060,0
+AT+CIPMODE=1
+AT+CIPSEND
+
+B模块
+AT+CIPMUX=0
+AT+CIPSTART="UDP","255.255.255.255",6060,6060,0
+AT+CIPMODE=1
+AT+CIPSEND
+
